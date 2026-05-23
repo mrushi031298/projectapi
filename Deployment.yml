@@ -1,34 +1,32 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
- name: productsapideployment
+  name: productsapideployment
 spec:
- replicas: 1
- selector:
-   matchLabels:
-     app: products
- template:
-  metadata:
-   name: products
-   labels:
-     app: products
-  spec:
-    containers:
-    - name: productscontainer
-      image: vishwajeetkore/products
-      ports:
-      - containerPort: 8080
+  replicas: 1
+  selector:
+    matchLabels:
+      app: products
+  template:
+    metadata:
+      labels:
+        app: products
+    spec:
+      containers:
+      - name: productscontainer
+        image: 907260787494.dkr.ecr.us-east-1.amazonaws.com/backend_product:latest
+        ports:
+        - containerPort: 8080
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
- name: productssvc
+  name: productssvc
 spec:
   type: LoadBalancer
   selector:
-   app: products
+    app: products
   ports:
-   - port: 80
-     targetPort: 8080
-...
+  - port: 80
+    targetPort: 8080
