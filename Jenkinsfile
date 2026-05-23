@@ -1,38 +1,62 @@
 pipeline {
+    tools {
+        maven "maven"
+    }
     agent any
     
-    tools{
-        maven "Maven-3.9.9"
-    }    
-
-    stages {
-        stage('Git Clone') {
-            steps {
-               git branch: 'main', url: 'https://github.com/ashokitschool/01_products_api.git'
-            }
-        }
-        stage('Maven Build'){
-            steps{
-             sh 'mvn clean package'
-            }
-        }
-        stage('Docker Image'){
-            steps{
-             sh 'docker build -t ashokit/products_api .'
-            }
-        }
-        stage('Docker Image push'){
-            steps{
-            withCredentials([string(credentialsId: 'docker_pwd', variable: 'docker_pwd')]) {
-                   sh 'docker login -u ashokit -p ${docker_pwd}'
-                   sh 'docker push ashokit/products_api'
-            }
-            }
-        }
-        stage('kubernetes deployment'){
-            steps{
-             sh 'kubectl apply -f Deployment.yml'
-            }
-        }        
+    environment{
+        AWS_REGION = "us-east-1"
+        ECR = "907260787494.dkr.ecr.us-east-1.amazonaws.com"
+        ECR_REPO = "907260787494.dkr.ecr.us-east-1.amazonaws.com/backend_product"
+        IMAGE_TAG = "latest"
     }
+    
+    stages{
+        stage ('Git clone'){
+            steps{
+             git branch: 'main', credentialsId: 'gitcred', url: 'https://github.com/vishwajeetkore/projectapi.git'
+        }
+    }
+    
+    stage('Maven Build '){
+        steps{
+            sh 'mvn clean package'
+        }
+    }
+    
+    stage ('Docker Build'){
+        steps{
+            sh 'docker build -t backend_product .'
+            sh 'docker tag backend_product:$IMAGE_TAG $ECR_REPO:$IMAGE_TAG'
+        }
+    }
+    stage ('ECR Login'){
+        steps{
+            withCredentials([[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'awscred'
+                ]]){
+            sh '''
+            aws ecr get-login-password --region $AWS_REGION | \
+            docker login --username AWS --password-stdin $ECR
+            '''
+        }
+            
+        }
+    }
+    
+    stage('Docker Push'){
+        steps{
+             sh 'docker push $ECR_REPO:$IMAGE_TAG'
+        }
+    }
+    
+ stage ('K8s Deployment'){
+     steps {
+         sh 'kubectl apply -f Deployment.yml'
+     }
+ }
+        
+    }
+    
 }
