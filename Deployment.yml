@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: productscontainer
-        image: 907260787494.dkr.ecr.us-east-1.amazonaws.com/chimnuu_product:latest
+        image: 475590310996.dkr.ecr.us-east-1.amazonaws.com/chimnuu_product:latest
         ports:
         - containerPort: 8080
 
